@@ -12,7 +12,7 @@ from multiprocessing import Pool
 import numpy
 
 import qaccel
-from qaccel.reference.alanine import ref_msm
+from qaccel.reference.alanine import get_ref_msm
 from qaccel.adapt import Random
 from qaccel.simulator import TMatSimulator
 from qaccel.builder import MSMBuilder
@@ -31,22 +31,22 @@ def get_params():
 
 # Define initial conditions
 def initial(run):
+    """Start in random states"""
     return numpy.random.randint(run.conv.true_n)
 
 # Prepare the calculation
-func, args = qaccel.get_map(
-    param_gen=get_params(),
-    ref_msm=ref_msm(),
-    adapt=Random,
-    simulator=TMatSimulator,
-    builder=MSMBuilder,
-    convergence=Frobenius,
+ref_msm = get_ref_msm()
+run = qaccel.Run(
+    adapter=Random(),
+    simulator=TMatSimulator(ref_msm),
+    builder=MSMBuilder(),
+    convergence=Frobenius(ref_msm),
     initial_func=initial
 )
 
 # Run the calculation
 with Pool(16) as pool:
-    results = pool.map(func, args)
+    results = pool.map(run.run, get_params())
 
 # Save the results
 with open("results.pickl", 'wb') as f:

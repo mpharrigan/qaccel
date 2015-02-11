@@ -9,46 +9,35 @@ import numpy as np
 import pandas as pd
 
 
-def get_map(*, param_gen, ref_msm, simulator, adapt, builder, convergence,
-            initial_func):
-    """Get function and arguments to pass to `map`
+class Run:
+    """A single adaptive run until convergence
 
-    :param param_gen: An iterator that yields Params
-    :param ref_msm: Reference MSM
     :param simulator: Object responsible for running simulation
-    :param adapt: Object responsible for generating new starting states
+    :param adapter: Object responsible for generating new starting states
     :param builder: Object responsible for building models
     :param convergence: Object responsible for checking for convergence
     :param initial_func: Function for generating initial starting states
     """
 
-    def map_func(param):
-        r = Run(simulator, builder, convergence, adapt, initial_func, param)
-        return r.run()
-
-    return map_func, param_gen
-
-
-class Run:
-    def __init__(self, simulator, builder, conv, adapter, initial_func, param):
+    def __init__(self, *, simulator, builder, convergence, adapter,
+                 initial_func):
         self.simulator = simulator
         self.builder = builder
-        self.conv = conv
+        self.conv = convergence
         self.adapter = adapter
-        self.param = param
         self.initial_func = initial_func
 
 
-    def run(self):
+    def run(self, param):
         results = []
-        steps_left = self.param.post_converge // self.param.res
+        steps_left = param.post_converge // param.res
         running_counts = np.zeros((self.conv.true_n, self.conv.true_n))
         sstate = self.initial_func()
 
         while True:
             # States will be a list of trajectories, where each trajectory
             # is a 1d sequence of state labels.
-            states = self.simulator.sample_states(self.param, sstate=sstate)
+            states = self.simulator.sample_states(param, sstate=sstate)
 
             # Get first states of each trajectory
             step_it = enumerate(zip_longest(*states))
@@ -62,9 +51,9 @@ class Run:
                     if pr is not None and ne is not None:
                         running_counts[pr, ne] += 1
 
-                if i % self.param.res == 0:
+                if i % param.res == 0:
                     # make msm
-                    msm = self.builder.build_msm(running_counts)
+                    msm = self.builder.build(running_counts)
 
                     # calculate fro
                     err, converged = self.conv.check_conv(msm)

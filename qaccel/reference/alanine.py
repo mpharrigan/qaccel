@@ -17,7 +17,7 @@ from msmbuilder.example_datasets import fetch_alanine_dipeptide
 log = logging.getLogger(__name__)
 
 
-def ref_msm():
+def get_ref_msm():
     """Load and return a saved MSM."""
 
     # TODO
