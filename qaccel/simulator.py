@@ -17,12 +17,14 @@ class TMatSimulator(Simulator):
         self.msm = msm
 
     def sample_states(self, param, sstate):
-        trajs = []
+        """Sample from MSM
+
+        The actual length of trajectories will be spt + 1 to give
+        `spt` steps. The starting state is included.
+        """
         assert len(sstate) == param.tpr, _ERRMSG.format(len(sstate))
-        for ss in sstate:
-            trajs += [
-                self.msm.sample(state=ss, n_steps=param.spt)
-            ]
+        trajs = [self.msm.sample(state=ss, n_steps=param.spt + 1)
+                 for ss in sstate]
         return trajs
 
 

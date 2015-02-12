@@ -48,7 +48,7 @@ run = qaccel.Run(
 
 # Run the calculation
 with Pool(16) as pool:
-    results = pool.map(run.run, get_params())
+    results = pool.map(run.safe_run, get_params())
 
 # Save the results
 with open("results.pickl", 'wb') as f:

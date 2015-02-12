@@ -29,24 +29,49 @@ class Run:
         self.adapter = adapter
         self.initial_func = initial_func
 
+    @classmethod
+    def _set_up_logger(cls, param):
+        parm_str = param.unique_string()
+        log_fn = "run-{}.log".format(parm_str)
+        log = logging.getLogger(parm_str)
+        formatter = logging.Formatter(style='{')
+        filehandler = logging.FileHandler(log_fn, mode='w')
+        filehandler.setFormatter(formatter)
+        log.addHandler(filehandler)
+        return log
+
+    def safe_run(self, param, out_fn_fmt="results-{param_str}.h5"):
+        """Run the adaptive loop where a problem won't destroy everything
+
+        Catch exceptions, save results here.
+        """
+        log = logging.getLogger(param.unique_string())
+        try:
+            result = self.run(param)
+            out_fn = out_fn_fmt.format(param_str=param.unique_string())
+            if out_fn.endswith(".h5"):
+                result.to_hdf(out_fn, key='results')
+            else:
+                log.warn("Didn't save an individual run output.")
+                log.warn("Unknown file format: %s", out_fn)
+
+            return result
+
+        except Exception as e:
+            log.exception("A problem occurred")
+
     def run(self, param):
         """Run the adaptive loop
 
         :param param: Values which change for each run.
         """
-        parm_str = param.unique_string()
-        log_fn = "run-{}.log".format(parm_str)
-        log = logging.getLogger(parm_str)
-        log.addHandler(logging.FileHandler(log_fn, mode='w'))
+        log = self._set_up_logger(param)
+        log.info("Starting simulation %s", param.unique_string())
         results = []
         steps_left = param.post_converge // param.res
         running_counts = np.zeros((self.conv.true_n, self.conv.true_n))
         sstate = self.initial_func(self, param)
-
-        log.debug("Logging debug")
-        log.info("Logging info")
-        log.warning("Logging warning")
-        log.error("Logging error")
+        round_i = 0
 
         while True:
             # States will be a list of trajectories, where each trajectory
@@ -78,17 +103,24 @@ class Run:
                     if converged:
                         steps_left -= 1
 
-                    # Exit condition
-                    if steps_left < 1:
-                        break
+                    log.info(
+                        "Round %4d Step %10d Error: %10g Converged %s",
+                        round_i, i, err, converged
+                    )
 
                 prev_step = step
 
+            # Exit condition
+            if steps_left < 1:
+                break
+
             # Set starting states
             sstate = self.adapter.adapt(param, running_counts)
+            round_i += 1
 
         # Return a data frame
-        res_df = pd.DataFrame(results, index='step_i')
+        res_df = pd.DataFrame(results)
+        log.info("Done")
         return res_df
 
 
