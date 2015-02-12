@@ -34,12 +34,14 @@ class Run:
 
         :param param: Values which change for each run.
         """
-        log = logging.getLogger(param.unique_string())
-        log.addHandler(logging.FileHandler(param.unique_string()))
+        parm_str = param.unique_string()
+        log_fn = "run-{}.log".format(parm_str)
+        log = logging.getLogger(parm_str)
+        log.addHandler(logging.FileHandler(log_fn, mode='w'))
         results = []
         steps_left = param.post_converge // param.res
         running_counts = np.zeros((self.conv.true_n, self.conv.true_n))
-        sstate = self.initial_func(param)
+        sstate = self.initial_func(self, param)
 
         log.debug("Logging debug")
         log.info("Logging info")
@@ -49,7 +51,7 @@ class Run:
         while True:
             # States will be a list of trajectories, where each trajectory
             # is a 1d sequence of state labels.
-            states = self.simulator.sample_states(param, sstate=sstate)
+            states = self.simulator.sample_states(param, sstate)
 
             # Get first states of each trajectory
             step_it = enumerate(zip_longest(*states))
@@ -83,7 +85,7 @@ class Run:
                 prev_step = step
 
             # Set starting states
-            sstate = self.adapter.adapt(running_counts)
+            sstate = self.adapter.adapt(param, running_counts)
 
         # Return a data frame
         res_df = pd.DataFrame(results, index='step_i')

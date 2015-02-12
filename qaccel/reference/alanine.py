@@ -13,14 +13,15 @@ from msmbuilder.cluster import MiniBatchKMeans
 from msmbuilder.featurizer import DihedralFeaturizer
 from msmbuilder.example_datasets import fetch_alanine_dipeptide
 
+from .util import get_fn
 
 log = logging.getLogger(__name__)
 
 
 def get_ref_msm():
     """Load and return a saved MSM."""
-
-    # TODO
+    with open(get_fn('ala.msm.pickl'), 'rb') as f:
+        return pickle.load(f)
 
 
 def make_alanine_reference_data(dirname):
