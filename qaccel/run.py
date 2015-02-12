@@ -7,6 +7,7 @@ from itertools import zip_longest
 
 import numpy as np
 import pandas as pd
+import logging
 
 
 class Run:
@@ -33,10 +34,17 @@ class Run:
 
         :param param: Values which change for each run.
         """
+        log = logging.getLogger(param.unique_string())
+        log.addHandler(logging.FileHandler(param.unique_string()))
         results = []
         steps_left = param.post_converge // param.res
         running_counts = np.zeros((self.conv.true_n, self.conv.true_n))
         sstate = self.initial_func(param)
+
+        log.debug("Logging debug")
+        log.info("Logging info")
+        log.warning("Logging warning")
+        log.error("Logging error")
 
         while True:
             # States will be a list of trajectories, where each trajectory

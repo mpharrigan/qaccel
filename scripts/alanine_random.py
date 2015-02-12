@@ -7,6 +7,7 @@
 import os
 import itertools
 import pickle
+import logging
 from multiprocessing import Pool
 
 import numpy
@@ -20,6 +21,7 @@ from qaccel.convergence import Frobenius
 
 
 os.chdir(os.environ.get("PBS_O_WORKDIR", "."))
+qaccel.init_logging(logging.DEBUG)
 
 # Define the search space
 def get_params():
