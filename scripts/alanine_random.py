@@ -26,13 +26,13 @@ def get_params():
     spts = [2 ** i for i in range(4, 10)]
     tprs = [10 ** i for i in range(4)]
     for spt, tpr in itertools.product(spts, tprs):
-        yield qaccel.Param(spt=spt, tpr=tpr)
+        yield qaccel.Param(spt=spt, tpr=tpr, res=8, post_converge=1000)
 
 
 # Define initial conditions
-def initial(run):
+def initial(run, param):
     """Start in random states"""
-    return numpy.random.randint(run.conv.true_n)
+    return numpy.random.randint(run.conv.true_n, size=param.tpr)
 
 # Prepare the calculation
 ref_msm = get_ref_msm()
@@ -40,7 +40,7 @@ run = qaccel.Run(
     adapter=Random(),
     simulator=TMatSimulator(ref_msm),
     builder=MSMBuilder(),
-    convergence=Frobenius(ref_msm),
+    convergence=Frobenius(ref_msm, cutoff=1e-2),
     initial_func=initial
 )
 

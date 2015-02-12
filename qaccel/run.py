@@ -16,7 +16,8 @@ class Run:
     :param adapter: Object responsible for generating new starting states
     :param builder: Object responsible for building models
     :param convergence: Object responsible for checking for convergence
-    :param initial_func: Function for generating initial starting states
+    :param initial_func: Function for generating initial starting states. It
+                         will be passed the run object and a param object.
     """
 
     def __init__(self, *, simulator, builder, convergence, adapter,
@@ -27,12 +28,15 @@ class Run:
         self.adapter = adapter
         self.initial_func = initial_func
 
-
     def run(self, param):
+        """Run the adaptive loop
+
+        :param param: Values which change for each run.
+        """
         results = []
         steps_left = param.post_converge // param.res
         running_counts = np.zeros((self.conv.true_n, self.conv.true_n))
-        sstate = self.initial_func()
+        sstate = self.initial_func(param)
 
         while True:
             # States will be a list of trajectories, where each trajectory
