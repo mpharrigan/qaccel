@@ -47,17 +47,17 @@ class Run:
         """
         log = logging.getLogger(param.unique_string())
         try:
-            result = self.run(param)
+            res_df, res_param = self.run(param)
             out_fn = out_fn_fmt.format(param_str=param.unique_string())
             if out_fn.endswith(".h5"):
-                result.to_hdf(out_fn, key='results')
+                res_df.to_hdf(out_fn, key='results')
             else:
                 log.warn("Didn't save an individual run output.")
                 log.warn("Unknown file format: %s", out_fn)
 
-            return result
+            return res_df, res_param
 
-        except Exception as e:
+        except:
             log.exception("A problem occurred")
 
     def run(self, param):
@@ -121,6 +121,6 @@ class Run:
         # Return a data frame
         res_df = pd.DataFrame(results)
         log.info("Done")
-        return res_df
+        return res_df, param
 
 
