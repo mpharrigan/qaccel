@@ -97,7 +97,7 @@ class Run:
                     # calculate fro
                     err, converged = self.conv.check_conv(msm)
                     results += [dict(
-                        step_i=i, err=err, converged=converged
+                        round_i=round_i, step_i=i, err=err, converged=converged
                     )]
 
                     if converged:
