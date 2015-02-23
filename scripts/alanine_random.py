@@ -3,6 +3,8 @@
 # PBS -l walltime=72:00:00
 # PBS -N ala_rnd
 # PBS -j oe
+# PBS -m bea
+# PBS -M harrigan@stanford.edu
 
 import os
 import itertools
@@ -36,20 +38,32 @@ def initial(run, param):
     """Start in random states"""
     return numpy.random.randint(run.conv.true_n, size=param.tpr)
 
-# Prepare the calculation
-ref_msm = get_ref_msm()
-run = qaccel.Run(
-    adapter=Random(),
-    simulator=TMatSimulator(ref_msm),
-    builder=MSMBuilder(),
-    convergence=Frobenius(ref_msm, cutoff=1e-2),
-    initial_func=initial
-)
 
-# Run the calculation
-with Pool(16) as pool:
-    results = pool.map(run.safe_run, get_params())
+def run_clone(clone_i):
+    folder = "clone-{}".format(clone_i)
+    os.mkdir(folder)
+    os.chdir(folder)
 
-# Save the results
-with open("results.pickl", 'wb') as f:
-    pickle.dump(results, f)
+    # Prepare the calculation
+    ref_msm = get_ref_msm()
+    run = qaccel.Run(
+        adapter=Random(ref_msm),
+        simulator=TMatSimulator(ref_msm),
+        builder=MSMBuilder(),
+        convergence=Frobenius(ref_msm, cutoff=1e-1),
+        initial_func=initial
+    )
+
+    # Run the calculation
+    with Pool(16) as pool:
+        results = pool.map(run.safe_run, get_params())
+
+    # Save the results
+    with open("results.pickl", 'wb') as f:
+        pickle.dump(results, f)
+
+    os.chdir('..')
+
+
+for i in range(10):
+    run_clone(i)
