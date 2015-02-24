@@ -17,4 +17,5 @@ setup(name='qaccel',
       author='Matthew Harrigan',
       packages=find_packages(),
       zip_safe=False,
-      package_data={'qaccel': ['reference/*.*']})
+      package_data={'qaccel': ['reference/*.*',
+                               'reference/data/*.*']})
