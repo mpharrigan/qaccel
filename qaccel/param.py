@@ -21,6 +21,10 @@ class Param:
         self.res = res
         self.post_converge = post_converge
 
+    def unique_tuple(self):
+        """Used for equality testing and hashing."""
+        return self.spt, self.tpr, self.res, self.post_converge
+
     def unique_string(self):
         """We need a string that identifies runs
 
@@ -28,3 +32,9 @@ class Param:
         within a grid of runs
         """
         return "{spt}_{tpr}".format(**self.__dict__)
+
+    def __eq__(self, other):
+        return self.unique_tuple() == other.unique_tuple()
+
+    def __hash__(self):
+        return hash(self.unique_tuple())
