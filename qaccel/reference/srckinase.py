@@ -13,10 +13,11 @@ import shutil
 import scipy.io
 import mdtraj as md
 import numpy as np
-
 from msmbuilder.msm import MarkovStateModel
 from msmbuilder.decomposition import PCA
 from msmbuilder.featurizer import DihedralFeaturizer
+
+from .util import get_fn
 
 
 log = logging.getLogger(__name__)
@@ -26,6 +27,12 @@ SRC = dict(
     SRC_FILE="MSM_2000states_csrc.tar.gz",
     SRC_DIR="srckinase",
 )
+
+
+def get_ref_msm():
+    """Load and return a saved MSM."""
+    with open(get_fn('src.msm.pickl'), 'rb') as f:
+        return pickle.load(f)
 
 
 def _download(source, tar_dest, untar_dest):

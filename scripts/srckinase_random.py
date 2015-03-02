@@ -15,7 +15,7 @@ from multiprocessing import Pool
 import numpy
 
 import qaccel
-from qaccel.reference.alanine import get_ref_msm
+from qaccel.reference.srckinase import get_ref_msm
 from qaccel.adapt import Random
 from qaccel.simulator import TMatSimulator
 from qaccel.builder import MSMBuilder
@@ -27,10 +27,10 @@ qaccel.init_logging(logging.INFO)
 
 # Define the search space
 def get_params():
-    spts = [2 ** i for i in range(4, 10)]
+    spts = [2 ** i for i in range(5, 12)]
     tprs = [10 ** i for i in range(4)]
     for spt, tpr in itertools.product(spts, tprs):
-        yield qaccel.Param(spt=spt, tpr=tpr, res=8, post_converge=1000)
+        yield qaccel.Param(spt=spt, tpr=tpr, res=32, post_converge=1000)
 
 
 # Define initial conditions
