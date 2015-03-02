@@ -75,7 +75,8 @@ class Result:
     def __init__(self, df, param, window=None, cutoff=None):
         self.df = df
         self.param = param
-        self.steps = None
+        self.min_steps = None
+        self.ceil_steps = None
         self.rounds = None
 
         if window is not None and cutoff is not None:
@@ -96,12 +97,15 @@ class Result:
         rolling_df['rolling_conv'] = pd.rolling_mean(rolling_df['converged'],
                                                      window).fillna(0)
         loci = (rolling_df['rolling_conv'] >= cutoff).argmax()
-        rounds = rolling_df['round_i'].loc[loci] + 1
-        steps = self.param.spt * rounds
-        self.steps = steps
-        self.rounds = rounds
+        rounds = rolling_df['round_i'].loc[loci]
+        steps = (rounds * self.param.spt) + rolling_df['step_i'].loc[loci]
+
+        self.min_steps = steps
+        self.ceil_steps = self.param.spt * (rounds + 1)
+        self.rounds = rounds + 1
         return steps, rounds
 
     def record(self):
         """Return a record for constructing a pandas data frame."""
-        return dict(steps=self.steps, rounds=self.rounds, **self.param.__dict__)
+        return dict(min_steps=self.min_steps, ceil_steps=self.ceil_steps,
+                    rounds=self.rounds, **self.param.__dict__)
