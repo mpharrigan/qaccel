@@ -50,7 +50,7 @@ def run_clone(clone_i):
         adapter=Random(ref_msm),
         simulator=TMatSimulator(ref_msm),
         builder=MSMBuilder(),
-        convergence=Frobenius(ref_msm, cutoff=1e-1),
+        convergence=Frobenius(ref_msm, cutoff=5),
         initial_func=initial
     )
 
