@@ -10,7 +10,7 @@ from simtk import openmm
 
 
 def _serialize(system, integrator, sys_fn, int_fn):
-    """Serialize Openmm system and integrator to files."""
+    """Serialize openmm system and integrator to files."""
     with open(sys_fn, 'w') as sys_f:
         sys_f.write(openmm.XmlSerializer.serialize(system))
 
@@ -36,7 +36,7 @@ def generate_muller_sysint():
     """Set up muller potential."""
 
     mass = 12.0 * unit.dalton
-    temperature = 750 * unit.kelvin
+    temperature = 2000 * unit.kelvin
     friction = 100 / unit.picosecond
     timestep = 10.0 * unit.femtosecond
 
