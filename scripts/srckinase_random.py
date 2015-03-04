@@ -45,7 +45,7 @@ def run_clone(clone_i):
     os.chdir(folder)
 
     # Prepare the calculation
-    ref_msm = get_ref_msm()
+    ref_msm = get_ref_msm(power=1)
     run = qaccel.Run(
         adapter=Random(ref_msm),
         simulator=TMatSimulator(ref_msm),

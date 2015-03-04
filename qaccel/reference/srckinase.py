@@ -29,9 +29,12 @@ SRC = dict(
 )
 
 
-def get_ref_msm():
-    """Load and return a saved MSM."""
-    with open(get_fn('src.msm.pickl'), 'rb') as f:
+def get_ref_msm(power=1):
+    """Load and return a saved MSM.
+
+    :param: Tmat was raised to this power.
+    """
+    with open(get_fn('src.{power}.msm.pickl'.format(power=power)), 'rb') as f:
         return pickle.load(f)
 
 
@@ -44,7 +47,26 @@ def _download(source, tar_dest, untar_dest):
             tmat_tar_f.extractall(untar_dest)
 
 
-def get_src_kinase_data(dirname, cleanup=True):
+def _build_from_download(power, fmt):
+    fmt = dict(power=power, **fmt)
+
+    # Load and convert
+    msm, centers = generate_srckinase_msm(
+        tmat_fn="{dirname}/{SRC_DIR}/Data_l5/tProb.mtx".format(**fmt),
+        pops_fn="{dirname}/{SRC_DIR}/Data_l5/Populations.dat".format(**fmt),
+        mapping_fn="{dirname}/{SRC_DIR}/Data_l5/Mapping.dat".format(**fmt),
+        gens_fn="{dirname}/{SRC_DIR}/Gens.lh5".format(**fmt),
+        power=power
+    )
+
+    np.save("{dirname}/src.{power}.centers.npy".format(**fmt), centers)
+
+    # Save MSM Object
+    with open("{dirname}/src.{power}.msm.pickl".format(**fmt), 'wb') as f:
+        pickle.dump(msm, f)
+
+
+def get_src_kinase_data(dirname, powers, cleanup=True):
     """Get the 2000 state msm from Stanford's SDR."""
     fmt = dict(dirname=dirname, **SRC)
 
@@ -60,42 +82,28 @@ def get_src_kinase_data(dirname, cleanup=True):
         "{dirname}/{SRC_DIR}".format(**fmt)
     )
 
-    # Load and convert
-    msm, centers = generate_srckinase_msm(
-        tmat_fn="{dirname}/{SRC_DIR}/Data_l5/tProb.mtx".format(**fmt),
-        pops_fn="{dirname}/{SRC_DIR}/Data_l5/Populations.dat".format(**fmt),
-        mapping_fn="{dirname}/{SRC_DIR}/Data_l5/Mapping.dat".format(**fmt),
-        gens_fn="{dirname}/{SRC_DIR}/Gens.lh5".format(**fmt)
-    )
-
-    np.save("{dirname}/src.centers.npy".format(**fmt), centers)
-
-
-    # Save MSM Object
-    with open("{dirname}/src.msm.pickl".format(**fmt), 'wb') as f:
-        pickle.dump(msm, f)
+    for power in powers:
+        _build_from_download(power, fmt)
 
     # Optionally, delete all data
     if cleanup:
         shutil.rmtree("{dirname}/{SRC_DIR}".format(**fmt))
 
 
-def generate_srckinase_msm(tmat_fn, pops_fn, mapping_fn, gens_fn):
-    msm = _generate_msm(tmat_fn, pops_fn)
+def generate_srckinase_msm(tmat_fn, pops_fn, mapping_fn, gens_fn, power=1):
+    msm = _generate_msm(tmat_fn, pops_fn, power=power)
     centers = _generate_centers(mapping_fn, gens_fn)
     return msm, centers
 
 
-def _generate_msm(tmat_fn, populations_fn):
+def _generate_msm(tmat_fn, populations_fn, power):
     tmat_sparse = scipy.io.mmread(tmat_fn)
     tmat_dense = tmat_sparse.toarray()
+    tmat_dense = np.linalg.matrix_power(tmat_dense, power)
 
     populations = np.loadtxt(populations_fn)
 
-    # Data indicates a lag time of 5. Note this is not really relevant
-    # Make sure in convergence checks to divide timescales by this
-    # for an accurate comparison
-    msm = MarkovStateModel(lag_time=5)
+    msm = MarkovStateModel()
     msm.n_states_ = tmat_dense.shape[0]
     msm.mapping_ = dict(zip(np.arange(msm.n_states_), np.arange(msm.n_states_)))
     msm.transmat_ = tmat_dense
