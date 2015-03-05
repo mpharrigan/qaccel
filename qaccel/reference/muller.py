@@ -38,7 +38,7 @@ def generate_muller_sysint():
     mass = 12.0 * unit.dalton
     temperature = 2000 * unit.kelvin
     friction = 100 / unit.picosecond
-    timestep = 5.0 * unit.femtosecond
+    timestep = 1.0 * unit.femtosecond
 
     # Prepare the system
     system = openmm.System()
