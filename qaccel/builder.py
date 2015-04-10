@@ -20,7 +20,10 @@ class MSMBuilder:
         # Do msm.fit() by hand.
         msm = MarkovStateModel(**self.msm_kwargs)
         msm.countsmat_ = counts
-        msm.transmat_, msm.populations_ = msm._fit_mle(counts)
+        try:
+            msm.transmat_, msm.populations_ = msm._fit_mle(counts)
+        except ValueError as e:
+            msm.transmat_, msm.populations_ = msm._fit_mle(np.ones_like(counts))
         msm.mapping_ = dict((i, i) for i in range(len(counts)))
         msm._is_dirty = True
 

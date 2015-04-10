@@ -46,6 +46,7 @@ class Run:
         Catch exceptions, save results here.
         """
         log = logging.getLogger(param.unique_string())
+        np.random.seed()
         try:
             res_df, res_param = self.run(param)
             out_fn = out_fn_fmt.format(param_str=param.unique_string())
