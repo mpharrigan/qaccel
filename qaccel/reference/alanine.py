@@ -63,7 +63,7 @@ def generate_alanine_msm(ala):
     kmeans.fit(feat_trajs)
 
     # Build MSM
-    msm = MarkovStateModel(lag_time=3, verbose=False, n_timescales=5)
+    msm = MarkovStateModel(lag_time=3, verbose=False)
     msm.fit(kmeans.labels_)
 
     return msm, kmeans

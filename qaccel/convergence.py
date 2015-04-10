@@ -34,7 +34,7 @@ class Frobenius:
         return self.ref_msm.n_states_
 
 class Gmrq:
-    def __init(self, ref_msm, *, cutoff):
+    def __init__(self, ref_msm, *, cutoff):
         self.ref_msm = ref_msm
         self.cutoff = cutoff # minimum gmrq
 
@@ -56,4 +56,8 @@ class Gmrq:
 
         converged = trace > self.cutoff
         return trace, converged
+
+    @property
+    def true_n(self):
+        return self.ref_msm.n_states_
 

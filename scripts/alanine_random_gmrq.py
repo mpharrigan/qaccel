@@ -49,9 +49,9 @@ def run_clone(clone_i):
     run = qaccel.Run(
         adapter=Random(ref_msm),
         simulator=TMatSimulator(ref_msm),
-        # n_timescales must match reference data.
+        # n_timescales must be less than that of reference data.
         builder=MSMBuilder(msm_kwargs=dict(n_timescales=5), pseudo_count=1e-5),
-        convergence=Gmrq(ref_msm, cutoff=1e-1),
+        convergence=Gmrq(ref_msm, cutoff=4.8),
         initial_func=initial
     )
 

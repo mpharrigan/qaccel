@@ -21,6 +21,7 @@ class MSMBuilder:
         msm = MarkovStateModel(**self.msm_kwargs)
         msm.countsmat_ = counts
         msm.transmat_, msm.populations_ = msm._fit_mle(counts)
+        msm.mapping_ = dict((i, i) for i in range(len(counts)))
         msm._is_dirty = True
 
         return msm
