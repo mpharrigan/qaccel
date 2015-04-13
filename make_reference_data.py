@@ -23,11 +23,11 @@ def make_reference_data(dirname, alanine=True, muller=True, srckinase=True):
     except OSError:
         pass
 
-    if alanine:
+    if muller:
         print('Making Muller Data')
         make_muller_reference_data(dirname)
 
-    if muller:
+    if alanine:
         print('Making Alanine Data')
         make_alanine_reference_data(dirname)
 
