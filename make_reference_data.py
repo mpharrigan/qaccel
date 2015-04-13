@@ -14,6 +14,9 @@ def make_reference_data(dirname, alanine=True, muller=True, srckinase=True):
     """Make reference data into a given directory.
 
     :param dirname: Where to put the files.
+    :param alanine: Whether to make alanine data
+    :param muller: Whether to make muller data
+    :param srckinase: Whether to make srckinase data
     """
     try:
         os.mkdir(dirname)
@@ -30,7 +33,7 @@ def make_reference_data(dirname, alanine=True, muller=True, srckinase=True):
 
     if srckinase:
         print("Getting Src Kinase Data")
-        get_src_kinase_data(dirname)
+        get_src_kinase_data(dirname, powers=[1, 10])
 
 
 def parse():
