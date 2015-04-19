@@ -28,15 +28,15 @@ class Frobenius:
 
         return err, converged
 
-
     @property
     def true_n(self):
         return self.ref_msm.n_states_
 
+
 class Gmrq:
     def __init__(self, ref_msm, *, cutoff):
         self.ref_msm = ref_msm
-        self.cutoff = cutoff # minimum gmrq
+        self.cutoff = cutoff
 
         self.S = np.diag(ref_msm.populations_)
         self.C = self.S.dot(ref_msm.transmat_)
@@ -47,15 +47,21 @@ class Gmrq:
 
         V = msm.right_eigenvectors_
         if msm.mapping_ != self.ref_msm.mapping_:
+            raise ValueError("Eigensystem mapping doesn't match")
+            # TODO: remove below when this is found to work.
             V = msm._map_eigenvectors(V, self.ref_msm.mapping_)
 
         try:
-            trace = np.trace(V.T.dot(C.dot(V)).dot(np.linalg.inv(V.T.dot(S.dot(V)))))
+            trace = np.trace(
+                V.T.dot(C.dot(V)).dot(np.linalg.inv(V.T.dot(S.dot(V)))))
         except np.linalg.LinAlgError:
             trace = -1
 
-        converged = trace > self.cutoff
-        return trace, converged
+        # Max is the sum of the true eigenvalues
+        # NOTE: ref_msm must have an accurate n_timescales property
+        err = self.ref_msm.score_ - trace
+        converged = err < self.cutoff
+        return err, converged
 
     @property
     def true_n(self):
