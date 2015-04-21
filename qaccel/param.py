@@ -13,12 +13,13 @@ class Param:
             - Randomly fluctuating out of convergence on what would have
               been the last round and continuing simulation in the converged
               regime.
+
     """
 
     def __init__(self, *, spt, tpr, res, post_converge):
         self.spt = spt
         self.tpr = tpr
-        self.res = res
+        self.res = min(res, spt)
         self.post_converge = post_converge
 
     def unique_tuple(self):
