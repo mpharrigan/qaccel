@@ -23,7 +23,7 @@ class TMatSimulator(Simulator):
         `spt` steps. The starting state is included.
         """
         assert len(sstate) == param.tpr, _ERRMSG.format(len(sstate))
-        trajs = [self.msm.sample(state=ss, n_steps=param.spt + 1)
+        trajs = [self.msm.sample_discrete(state=ss, n_steps=param.spt + 1)
                  for ss in sstate]
         return trajs
 
