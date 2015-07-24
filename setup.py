@@ -4,6 +4,8 @@ import os
 
 from setuptools import setup, find_packages
 
+from Cython.Build import cythonize
+
 
 REFDIR = 'qaccel/reference/data'
 if not os.path.exists(REFDIR):
@@ -17,5 +19,6 @@ setup(name='qaccel',
       author='Matthew Harrigan',
       packages=find_packages(),
       zip_safe=False,
+      ext_modules = cythonize(["qaccel/count.pyx"]),
       package_data={'qaccel': ['reference/*.*',
                                'reference/data/*.*']})

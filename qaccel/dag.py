@@ -3,6 +3,19 @@ import time
 from IPython.parallel import Client
 
 
+class Deref:
+    def __init__(self, parallel):
+        self.ll = parallel
+        if self.ll:
+            self.client = Client()
+
+    def get(self, var):
+        if self.ll:
+            return self.client.get_result(var).get()
+        else:
+            return var
+
+
 def _call_simulate_init(simulator, *args):
     return simulator.init(*args)
 

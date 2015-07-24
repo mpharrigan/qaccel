@@ -1,5 +1,7 @@
 _ERRMSG = "Please provide n_tpr starting states. You gave {}"
 
+from .dag import Deref
+
 
 class Simulator:
     def sample_states(self, param, sstate):
@@ -13,19 +15,18 @@ class Simulator:
 
 
 class TMatSimulator(Simulator):
-    def __init__(self, msm):
+    def __init__(self, msm, parallel=True):
         self.msm = msm
+        self.dref = Deref(parallel)
 
-    def sample_states(self, param, sstate):
-        """Sample from MSM
+    def sample_from_sample(self, traj, params):
+        traj = self.dref.get(traj)
+        ret =  self.msm.sample_discrete(state=traj[-1], n_steps=params['res']+1)
+        return ret[1:]
 
-        The actual length of trajectories will be spt + 1 to give
-        `spt` steps. The starting state is included.
-        """
-        assert len(sstate) == param.tpr, _ERRMSG.format(len(sstate))
-        trajs = [self.msm.sample_discrete(state=ss, n_steps=param.spt + 1)
-                 for ss in sstate]
-        return trajs
+    def sample_from_adapt(self, states, i, params):
+        states = self.dref.get(states)
+        return self.msm.sample_discrete(state=states[i], n_steps=params['res'])
 
 
 class OpenMMSimulator(Simulator):
