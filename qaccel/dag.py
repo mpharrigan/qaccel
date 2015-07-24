@@ -2,69 +2,46 @@ import time
 
 from IPython.parallel import Client
 
-c = Client()
-lbv = c.load_balanced_view()
+
+def _call_simulate_init(simulator, *args):
+    return simulator.init(*args)
 
 
-def simulate(start, params):
-    import numpy
-
-    import time
-    time.sleep(10)
-
-    return numpy.random.randint(0, 10, (50, 2))
+def _call_simulate_from_simulate(simulator, *args):
+    return simulator.simulate_from_simulate(*args)
 
 
-def transform(traj_id, params):
-    from IPython.parallel import Client
-    c = Client()
-    traj = c.get_result(traj_id).get()
-    return traj[:, 0]
+def _call_simulate_from_adapt(simulator, *args):
+    return simulator.simulate_from_adapt(*args)
 
 
-def update(model_id, traj_id, params):
-    import numpy
-    from IPython.parallel import Client
-    c = Client()
-    traj = c.get_result(traj_id).get()
-    model = c.get_result(model_id).get()
-
-    lu, lc = numpy.unique(traj, return_counts=True)
-    for u, c in zip(lu, lc):
-        model[u] += c
-
-    return model
+def _call_model(modeler, *args):
+    return modeler.model(*args)
 
 
-def convergence(model_id, params):
-    from IPython.parallel import Client
-    c = Client()
-    model = c.get_result(model_id).get()
-
-    import time
-    time.sleep(10)
-
-    return max(v for v in model.values()) / 100
+def _call_convergence(convergence, *args):
+    return convergence.convergence(*args)
 
 
-def init_update():
-    return dict((i, 0) for i in range(11))
-
-
-def init_simulate():
-    pass
+def _call_adapt(adapter, *args):
+    return adapter.adapt(*args)
 
 
 class DAG:
-    def __init__(self, *, simulate_from_simulate, simulate_from_adapt, model,
-                 convergence, adapt, params):
+    def __init__(self, *,
+                 simulator,
+                 modeler,
+                 convergence,
+                 adapter,
+                 params):
 
-        # Functions
-        self.simulate_from_simulate = simulate_from_simulate
-        self.simulate_from_adapt = simulate_from_adapt
-        self.model = model
+        c = Client()
+        self.lbv = c.load_balanced_view()
+
+        self.simulator = simulator
+        self.modeler = modeler
         self.convergence = convergence
-        self.adapt = adapt
+        self.adapter = adapter
 
         # Results tracker
         self.cars_unknown = set()
@@ -75,8 +52,9 @@ class DAG:
         self.params = params
 
         # Initialize
-        self.simulate_pars = [lbv.apply(init_simulate) for _ in
-                              range(self.params['tpr'])]
+        self.simulate_pars = [
+            self.lbv.apply(_call_simulate_init, self.simulator)
+            for _ in range(self.params['tpr'])]
         self.model_par = None
         self.adapt_par = None
         self.res_i = 0
@@ -84,11 +62,12 @@ class DAG:
     def _submit_simulate_from_simulate(self):
         simulate_ars = []
         for simulate_par in self.simulate_pars:
-            with lbv.temp_flags(after=[simulate_par]):
+            with self.lbv.temp_flags(after=[simulate_par]):
                 simulate_ars.append(
-                    lbv.apply(self.simulate_from_simulate,
-                              simulate_par.msg_ids[0],
-                              self.params)
+                    self.lbv.apply(_call_simulate_from_simulate,
+                                   self.simulator,
+                                   simulate_par.msg_ids[0],
+                                   self.params)
                 )
         self.simulate_pars = simulate_ars
 
@@ -96,31 +75,38 @@ class DAG:
         tpr = self.params['tpr']
         simulate_ars = []
         for i in range(tpr):
-            with lbv.temp_flags(after=[self.adapt_par]):
+            with self.lbv.temp_flags(after=[self.adapt_par]):
                 simulate_ars.append(
-                    lbv.apply(self.simulate_from_adapt,
-                              self.adapt_par.msg_ids[0], i, self.params)
+                    self.lbv.apply(_call_simulate_from_adapt,
+                                   self.simulator,
+                                   self.adapt_par.msg_ids[0], i, self.params)
                 )
 
     def res_round(self):
-        with lbv.temp_flags(after=self.simulate_pars):
-            model_ar = lbv.apply(self.model,
-                                 [sar.msg_ids[0] for sar in self.simulate_pars],
-                                 self.params)
+        with self.lbv.temp_flags(after=self.simulate_pars):
+            model_ar = self.lbv.apply(_call_model,
+                                      self.modeler,
+                                      [sar.msg_ids[0] for sar in
+                                       self.simulate_pars],
+                                      self.params)
         self.model_par = model_ar
 
-        with lbv.temp_flags(after=[model_ar]):
-            convergence_ar = lbv.apply(self.convergence, model_ar.msg_ids[0],
-                                       self.params)
+        with self.lbv.temp_flags(after=[model_ar]):
+            convergence_ar = self.lbv.apply(_call_convergence,
+                                            self.convergence,
+                                            model_ar.msg_ids[0],
+                                            self.params)
 
         self.cars_unknown.add(convergence_ar)
         self.cars_all.append(convergence_ar)
         self.res_i += 1
 
     def adapt_round(self):
-        with lbv.temp_flags(after=[self.model_par]):
-            adapt_ar = lbv.apply(self.adapt, self.model_par.msg_ids[0],
-                                 self.params)
+        with self.lbv.temp_flags(after=[self.model_par]):
+            adapt_ar = self.lbv.apply(_call_adapt,
+                                      self.adapter,
+                                      self.model_par.msg_ids[0],
+                                      self.params)
         self.adapt_par = adapt_ar
 
     def round(self):
