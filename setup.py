@@ -13,7 +13,7 @@ if not os.path.exists(REFDIR):
     make_reference_data.make_reference_data(REFDIR)
 
 setup(name='qaccel',
-      version='0.1',
+      version='0.2',
       author='Matthew Harrigan',
       packages=find_packages(),
       zip_safe=False,
