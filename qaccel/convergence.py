@@ -2,6 +2,7 @@
 
 import scipy.linalg
 import numpy as np
+from .dag import Deref
 
 
 class Frobenius:
@@ -34,14 +35,17 @@ class Frobenius:
 
 
 class Gmrq:
-    def __init__(self, ref_msm, *, cutoff):
+    def __init__(self, ref_msm, *, cutoff, parallel=True):
         self.ref_msm = ref_msm
         self.cutoff = cutoff
 
         self.S = np.diag(ref_msm.populations_)
         self.C = self.S.dot(ref_msm.transmat_)
 
-    def check_conv(self, msm):
+        self.dref = Deref(parallel)
+
+    def convergence(self, msm, params):
+        msm = self.dref(msm)
         S = self.S
         C = self.C
 
@@ -61,9 +65,8 @@ class Gmrq:
         # NOTE: ref_msm must have an accurate n_timescales property
         err = self.ref_msm.score_ - trace
         converged = err < self.cutoff
-        return err, converged
+        return converged, err
 
     @property
     def true_n(self):
         return self.ref_msm.n_states_
-

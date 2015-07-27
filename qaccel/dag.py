@@ -9,7 +9,7 @@ class Deref:
         if self.ll:
             self.client = Client()
 
-    def get(self, var):
+    def __call__(self, var):
         if self.ll:
             return self.client.get_result(var).get()
         else:

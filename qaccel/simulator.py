@@ -20,12 +20,12 @@ class TMatSimulator(Simulator):
         self.dref = Deref(parallel)
 
     def sample_from_sample(self, traj, params):
-        traj = self.dref.get(traj)
+        traj = self.dref(traj)
         ret =  self.msm.sample_discrete(state=traj[-1], n_steps=params['res']+1)
         return ret[1:]
 
     def sample_from_adapt(self, states, i, params):
-        states = self.dref.get(states)
+        states = self.dref(states)
         return self.msm.sample_discrete(state=states[i], n_steps=params['res'])
 
 

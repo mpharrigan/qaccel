@@ -21,6 +21,6 @@ def make_counts(chunkedtrajs, n_states, dref):
     cdef int last;
     for chunks in chunkedtrajs:
         fc, *ocs = chunks
-        last = update_counts_first(counts, dref.get(fc))
+        last = update_counts_first(counts, dref(fc))
         for c in chunks:
-            last = update_counts(counts, dref.get(c), last)
+            last = update_counts(counts, dref(c), last)

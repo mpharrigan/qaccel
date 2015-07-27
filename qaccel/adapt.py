@@ -1,13 +1,15 @@
 import numpy as np
+from .dag import Deref
+
 
 class Random:
-
-    def __init__(self, ref_msm):
+    def __init__(self, ref_msm, *, parallel=True):
         self.ref_msm = ref_msm
         self.true_n = ref_msm.n_states_
+        self.dref = Deref(parallel)
 
-    def adapt(self, param, counts):
-        return np.random.randint(self.true_n, size=param.tpr)
+    def adapt(self, model, params):
+        return np.random.randint(self.true_n, size=params['tpr'])
 
 
 class TruePopWeightedSample:
