@@ -3,3 +3,4 @@ __pycache__/
 qaccel/reference/data
 build/
 dist/
+*.so

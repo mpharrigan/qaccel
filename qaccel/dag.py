@@ -6,11 +6,12 @@ from IPython.parallel import Client
 class Deref:
     def __init__(self, parallel):
         self.ll = parallel
-        if self.ll:
-            self.client = Client()
+        self.client = None
 
     def __call__(self, var):
         if self.ll:
+            if self.client is None:
+                self.client = Client()
             return self.client.get_result(var).get()
         else:
             return var
@@ -66,8 +67,8 @@ class DAG:
 
         # Initialize
         self.simulate_pars = [
-            self.lbv.apply(_call_simulate_init, self.simulator)
-            for _ in range(self.params['tpr'])]
+            self.lbv.apply(_call_simulate_init, self.simulator, i)
+            for i in range(self.params['tpr'])]
         self.model_par = None
         self.adapt_par = None
         self.res_i = 0
