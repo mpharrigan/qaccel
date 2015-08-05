@@ -12,7 +12,7 @@ class TestTMatSimulator(TestCase):
 
         self.simulator = TMatSimulator(msm, parallel=False)
         self.params = {
-            'res': 20,
+            'res': 30,
         }
 
     def test_init(self):
