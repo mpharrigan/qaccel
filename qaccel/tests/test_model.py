@@ -3,7 +3,7 @@ from qaccel.model import MSMFromLabtraj
 import numpy as np
 
 
-class TestModel(TestCase):
+class TestMSMFromLabtraj(TestCase):
     def setUp(self):
         self.modeler = MSMFromLabtraj(parallel=False)
         self.params = {

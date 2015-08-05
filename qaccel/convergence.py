@@ -52,8 +52,6 @@ class Gmrq:
         V = msm.right_eigenvectors_
         if msm.mapping_ != self.ref_msm.mapping_:
             raise ValueError("Eigensystem mapping doesn't match")
-            # TODO: remove below when this is found to work.
-            V = msm._map_eigenvectors(V, self.ref_msm.mapping_)
 
         try:
             trace = np.trace(
