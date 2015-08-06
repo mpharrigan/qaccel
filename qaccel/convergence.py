@@ -1,6 +1,7 @@
 """Classes which determine the convergence of an MSM."""
 
 import scipy.linalg
+import scipy.stats
 import numpy as np
 from .dag import Deref
 
@@ -62,4 +63,22 @@ class Gmrq:
         return {
             'converged': converged,
             'gmrq': err,
+        }
+
+
+class KL:
+    def __init__(self, ref_msm, *, cutoff, parallel=True):
+        self.ref_msm = ref_msm
+        self.cutoff = cutoff
+        self.dref = Deref(parallel)
+
+    def convergence(self, msm, params):
+        msm = self.dref(msm)
+        kl = np.sum([scipy.stats.entropy(prow, qrow, base=2)
+                     for prow, qrow in
+                     zip(msm.transmat_, self.ref_msm.transmat_)
+                     ])
+        return {
+            'converged': kl < self.cutoff,
+            'kl': kl,
         }
