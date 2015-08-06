@@ -10,13 +10,13 @@ from qaccel.reference import make_muller_reference_data, \
     make_alanine_reference_data, get_src_kinase_data
 
 
-def make_reference_data(dirname, alanine=True, muller=True, srckinase=True):
+def make_reference_data(dirname, alanine=True, muller=True, srckinase=False):
     """Make reference data into a given directory.
 
     :param dirname: Where to put the files.
     :param alanine: Whether to make alanine data
     :param muller: Whether to make muller data
-    :param srckinase: Whether to make srckinase data
+    :param srckinase: Whether to make srckinase data. Disabled by default!
     """
     try:
         os.mkdir(dirname)
@@ -51,11 +51,13 @@ def parse():
 
     args = parser.parse_args()
 
-    if (not args.alanine) and (not args.muller) and (not args.srckinase):
+    if not any((args.alanine, args.muller, args.srckinase)):
         make_reference_data(args.dirname)
     else:
-        make_reference_data(args.dirname, alanine=args.alanine,
-                            muller=args.muller, srckinase=args.srckinase)
+        make_reference_data(args.dirname,
+                            alanine=args.alanine,
+                            muller=args.muller,
+                            srckinase=args.srckinase)
 
 
 if __name__ == "__main__":

@@ -19,7 +19,6 @@ from msmbuilder.featurizer import DihedralFeaturizer
 
 from .util import get_fn
 
-
 log = logging.getLogger(__name__)
 
 SRC = dict(
@@ -34,6 +33,7 @@ def get_ref_msm(power=1):
 
     :param: Tmat was raised to this power.
     """
+    log.warning("Srckinase isn't a good system. Don't use it.")
     with open(get_fn('src.{power}.msm.pickl'.format(power=power)), 'rb') as f:
         return pickle.load(f)
 
@@ -97,6 +97,7 @@ def generate_srckinase_msm(tmat_fn, pops_fn, mapping_fn, gens_fn, power=1):
 
 
 def _generate_msm(tmat_fn, populations_fn, power):
+    log.warning("Srckinase isn't a good system. Don't use it.")
     tmat_sparse = scipy.io.mmread(tmat_fn)
     tmat_dense = tmat_sparse.toarray()
     tmat_dense = np.linalg.matrix_power(tmat_dense, power)
@@ -131,5 +132,3 @@ def _generate_centers(mapping_fn, gens_fn):
     pcax = pca.fit_transform(dihedx)[0]
 
     return pcax
-
-
