@@ -78,6 +78,10 @@ class DAG:
 
         # Params
         params['spt'] = params['res_spt'] * params['res']
+        # res_i   : within a 'trajectory', how many chunks we've done.
+        # adapt_i : how many 'full' trajectories we've done.
+        params['res_i'] = 0
+        params['adapt_i'] = 0
         self.params = params
 
         # Initialize simulation
@@ -89,12 +93,6 @@ class DAG:
         # Initialize other values
         self.model_ar = None
         self.adapt_ar = None
-
-        # Keep track of our progress
-        # res_i   : within a 'trajectory', how many chunks we've done.
-        # adapt_i : how many 'full' trajectories we've done.
-        self.res_i = 0
-        self.adapt_i = 0
 
     def _submit_simulate_from_simulate(self):
         tpr = self.params['tpr']
@@ -110,7 +108,7 @@ class DAG:
                 simulate_ars += [sar]
                 # as well as *all* trajectory data
                 #  --> add this chunk to one that has already started
-                all_i = tpr * self.adapt_i + i
+                all_i = tpr * self.params['adapt_i'] + i
                 self.all_simulate_mids[all_i].append(sar.msg_ids[0])
 
         # Save the list we constructed
@@ -146,7 +144,7 @@ class DAG:
 
         self.cars_unknown.add(convergence_ar)
         self.cars_all.append(convergence_ar)
-        self.res_i += 1
+        self.params['res_i'] += 1
 
     def adapt_round(self):
         with self.lbv.temp_flags(after=[self.model_ar]):
@@ -155,11 +153,11 @@ class DAG:
                                       self.model_ar.msg_ids[0],
                                       self.params)
         self.adapt_ar = adapt_ar
-        self.adapt_i += 1
-        self.res_i = 0
+        self.params['adapt_i'] += 1
+        self.params['res_i'] = 0
 
     def round(self):
-        if self.res_i < self.params['res_spt']:
+        if self.params['res_i'] < self.params['res_spt']:
             self._submit_simulate_from_simulate()
             self.res_round()
         else:

@@ -28,7 +28,7 @@ class Multi:
         return _is_done
 
     def convergence(self, msm, params):
-        result = dict()
+        result = params.copy()
         converged = list()
         for c in self.convs:
             res = c.convergence(msm, params)
