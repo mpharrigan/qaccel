@@ -1,0 +1,2 @@
+include versioneer.py
+include qaccel/_version.py
