@@ -171,8 +171,8 @@ class DAG:
         updated_cars_unknown = set()
         for car in self.cars_unknown:
             if car.ready():
-                converged, _ = car.get()
-                if converged:
+                result = car.get()
+                if result['converged']:
                     return True
                 else:
                     pass

@@ -42,6 +42,8 @@ class Gmrq:
 
     def convergence(self, msm, params):
         msm = self.dref(msm)
+        assert msm.n_timescales == self.ref_msm.n_timescales
+
         S = self.S
         C = self.C
 
