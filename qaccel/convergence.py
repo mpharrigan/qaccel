@@ -3,7 +3,7 @@
 import scipy.linalg
 import scipy.stats
 import numpy as np
-from .dag import Deref
+from .deref import Deref
 
 
 class Multi:

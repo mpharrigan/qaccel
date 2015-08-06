@@ -3,28 +3,6 @@ import time
 from IPython.parallel import Client
 
 
-class Deref:
-    """Dereference ipython parallel results.
-
-    If parallel, use an IPython.parallel client to retrieve a result.
-    Otherwise, the object is the result
-    """
-
-    def __init__(self, parallel):
-        self.ll = parallel
-        self.client = None
-
-    def __call__(self, var):
-        if self.ll:
-            # instantiate the client here so we can pass around objects
-            # that hold a reference to a Deref object
-            if self.client is None:
-                self.client = Client()
-            return self.client.get_result(var).get()
-        else:
-            return var
-
-
 # The following are helper functions to call a method on an object.
 # Using anything fancier (e.g. a function that returns the appropriate
 # function) will break with IPython.parallel
@@ -57,15 +35,14 @@ class DAG:
     """Run rounds as a directed acyclic graph of dependencies.
     """
 
-    def __init__(self, *,
+    def __init__(self, lbv, *,
                  simulator,
                  modeler,
                  convergence,
                  adapter,
                  params):
 
-        c = Client()
-        self.lbv = c.load_balanced_view()
+        self.lbv = lbv
 
         self.simulator = simulator
         self.modeler = modeler

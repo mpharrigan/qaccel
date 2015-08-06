@@ -1,6 +1,6 @@
 _ERRMSG = "Please provide n_tpr starting states. You gave {}"
 
-from .dag import Deref
+from .deref import Deref
 
 
 class TMatSimulator:

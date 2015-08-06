@@ -1,4 +1,4 @@
-from .dag import Deref
+from .deref import Deref
 from msmbuilder.msm import MarkovStateModel
 import numpy as np
 from .count import make_counts
