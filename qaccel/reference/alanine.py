@@ -29,8 +29,8 @@ def make_alanine_reference_data(dirname):
 
     We featurize using phi / psi angles
 
-    Note: This function is not-deterministic, although it would be useful
-    if it were, so testing could be conducted.
+    Note: This function is not deterministic, although it would be useful
+    if it were.
     """
     fmt = dict(dirname=dirname)
 
