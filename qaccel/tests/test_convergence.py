@@ -1,10 +1,10 @@
-from qaccel.convergence import Gmrq, KL
+from qaccel.convergence import Gmrq, KL, Multi
 from qaccel.simulator import TMatSimulator
 from qaccel.model import MSMFromLabtraj
 from unittest import TestCase
 
 
-class TestGmrq(TestCase):
+class TestConvergence(TestCase):
     def setUp(self):
         from qaccel.reference.alanine import get_ref_msm
         self.msm = get_ref_msm()
@@ -37,12 +37,12 @@ class TestGmrq(TestCase):
         self.assertLess(conv2['gmrq'], 0.1)
 
     def test_kl(self):
-        convergence = KL(self.msm, cutoff=5, parallel=False)
+        convergence = KL(self.msm, cutoff=7, parallel=False)
         traj1 = self.simulator.simulate_from_adapt([0], 0, self.params)
         model = self.modeler.model([[traj1]], self.params)
         conv1 = convergence.convergence(model, self.params)
 
-        self.assertGreater(conv1['kl'], 0.1)
+        self.assertGreater(conv1['kl'], 7)
         self.params.update(res=1000)
 
         traj2 = self.simulator.simulate_from_simulate(traj1, self.params)
@@ -50,6 +50,29 @@ class TestGmrq(TestCase):
 
         conv2 = convergence.convergence(model, self.params)
         self.assertLess(conv2['kl'], conv1['kl'])
-        self.assertLess(conv2['kl'], 5)
+        self.assertLess(conv2['kl'], 7)
         self.assertTrue(conv2['converged'])
 
+    def test_multi(self):
+        convergence = Multi(
+            KL(self.msm, cutoff=7, parallel=False),
+            Gmrq(self.msm, cutoff=0.1, parallel=False),
+            behavior='all'
+        )
+        traj1 = self.simulator.simulate_from_adapt([0], 0, self.params)
+        model = self.modeler.model([[traj1]], self.params)
+        conv1 = convergence.convergence(model, self.params)
+
+        self.assertGreater(conv1['kl'], 7)
+        self.assertGreater(conv1['gmrq'], 0.1)
+        self.params.update(res=1000)
+
+        traj2 = self.simulator.simulate_from_simulate(traj1, self.params)
+        model = self.modeler.model([[traj1, traj2]], self.params)
+
+        conv2 = convergence.convergence(model, self.params)
+        self.assertLess(conv2['kl'], conv1['kl'])
+        self.assertLess(conv2['gmrq'], conv1['gmrq'])
+        self.assertLess(conv2['kl'], 7)
+        self.assertLess(conv2['gmrq'], 0.1)
+        self.assertTrue(conv2['converged'])

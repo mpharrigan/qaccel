@@ -6,29 +6,37 @@ import numpy as np
 from .dag import Deref
 
 
-class Frobenius:
-    """Do the frobenius norm between transition matrix and reference
+class Multi:
+    """Run multiple convergence criteria.
 
-    :param ref_msm: Reference msm to compare transition matrix.
-    :param cutoff: The error cutoff, below which we are 'converged'
+    behavior:
+     - all : each needs to be converged
     """
 
-    def __init__(self, ref_msm, *, cutoff):
-        self.ref_msm = ref_msm
-        self.cutoff = cutoff
+    def __init__(self, *convs, behavior='all'):
+        self.convs = convs
+        self.behavior = behavior
 
-    def check_conv(self, msm):
-        """Check for convergence
+    @property
+    def is_done(self):
+        if self.behavior == 'all':
+            def _is_done(converged):
+                return all(converged)
+        else:
+            raise ValueError("Invalid behavior")
 
-        :param msm: The test MSM
-        :returns err: Some numerical error value
-        :returns converged: Whether error is below a threshold
-        """
-        diff_mat = self.ref_msm.transmat_ - msm.transmat_
-        err = scipy.linalg.norm(diff_mat, ord='fro')
-        converged = err < self.cutoff
+        return _is_done
 
-        return err, converged
+    def convergence(self, msm, params):
+        result = dict()
+        converged = list()
+        for c in self.convs:
+            res = c.convergence(msm, params)
+            converged += [res['converged']]
+            result.update(res)
+
+        result['converged'] = self.is_done(converged)
+        return result
 
 
 class Gmrq:
