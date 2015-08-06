@@ -20,6 +20,5 @@ setup(name='qaccel',
       packages=find_packages(),
       zip_safe=False,
       ext_modules=cythonize(["qaccel/count.pyx"]),
-      package_data={'qaccel': ['reference/*.*',
-                               'reference/data/*.*']}
+      package_data={'qaccel': ['reference/data/*.*']}
       )

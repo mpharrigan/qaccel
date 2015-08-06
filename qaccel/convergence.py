@@ -57,4 +57,7 @@ class Gmrq:
         # NOTE: ref_msm must have an accurate n_timescales property
         err = self.ref_msm.score_ - trace
         converged = err < self.cutoff
-        return converged, err
+        return {
+            'converged': converged,
+            'gmrq': err,
+        }
