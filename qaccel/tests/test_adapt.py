@@ -5,7 +5,7 @@ import numpy as np
 
 class TestRandom(TestCase):
     def setUp(self):
-        self.adapt = Random(n_states=2)
+        self.adapt = Random()
         self.params = {
             'n_states': 2,
             'tpr': 10,

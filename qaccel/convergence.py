@@ -29,10 +29,6 @@ class Frobenius:
 
         return err, converged
 
-    @property
-    def true_n(self):
-        return self.ref_msm.n_states_
-
 
 class Gmrq:
     def __init__(self, ref_msm, *, cutoff, parallel=True):
@@ -50,8 +46,6 @@ class Gmrq:
         C = self.C
 
         V = msm.right_eigenvectors_
-        if msm.mapping_ != self.ref_msm.mapping_:
-            raise ValueError("Eigensystem mapping doesn't match")
 
         try:
             trace = np.trace(
@@ -64,7 +58,3 @@ class Gmrq:
         err = self.ref_msm.score_ - trace
         converged = err < self.cutoff
         return converged, err
-
-    @property
-    def true_n(self):
-        return self.ref_msm.n_states_
