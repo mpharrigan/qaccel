@@ -4,18 +4,30 @@ from IPython.parallel import Client
 
 
 class Deref:
+    """Dereference ipython parallel results.
+
+    If parallel, use an IPython.parallel client to retrieve a result.
+    Otherwise, the object is the result
+    """
+
     def __init__(self, parallel):
         self.ll = parallel
         self.client = None
 
     def __call__(self, var):
         if self.ll:
+            # instantiate the client here so we can pass around objects
+            # that hold a reference to a Deref object
             if self.client is None:
                 self.client = Client()
             return self.client.get_result(var).get()
         else:
             return var
 
+
+# The following are helper functions to call a method on an object.
+# Using anything fancier (e.g. a function that returns the appropriate
+# function) will break with IPython.parallel
 
 def _call_simulate_init(simulator, *args):
     return simulator.init(*args)
@@ -42,6 +54,9 @@ def _call_adapt(adapter, *args):
 
 
 class DAG:
+    """Run rounds as a directed acyclic graph of dependencies.
+    """
+
     def __init__(self, *,
                  simulator,
                  modeler,
@@ -65,45 +80,63 @@ class DAG:
         params['spt'] = params['res_spt'] * params['res']
         self.params = params
 
-        # Initialize
-        self.simulate_pars = [
+        # Initialize simulation
+        self.simulate_ars = [
             self.lbv.apply(_call_simulate_init, self.simulator, i)
             for i in range(self.params['tpr'])]
-        self.model_par = None
-        self.adapt_par = None
+        self.all_simulate_mids = [[ar.msg_ids[0]] for ar in self.simulate_ars]
+
+        # Initialize other values
+        self.model_ar = None
+        self.adapt_ar = None
+
+        # Keep track of our progress
+        # res_i   : within a 'trajectory', how many chunks we've done.
+        # adapt_i : how many 'full' trajectories we've done.
         self.res_i = 0
+        self.adapt_i = 0
 
     def _submit_simulate_from_simulate(self):
+        tpr = self.params['tpr']
         simulate_ars = []
-        for simulate_par in self.simulate_pars:
-            with self.lbv.temp_flags(after=[simulate_par]):
-                simulate_ars.append(
-                    self.lbv.apply(_call_simulate_from_simulate,
-                                   self.simulator,
-                                   simulate_par.msg_ids[0],
-                                   self.params)
-                )
-        self.simulate_pars = simulate_ars
+        for i in range(tpr):
+            with self.lbv.temp_flags(after=[self.simulate_ars[i]]):
+                sar = self.lbv.apply(_call_simulate_from_simulate,
+                                     self.simulator,
+                                     self.simulate_ars[i].msg_ids[0],
+                                     self.params)
+
+                # add to AR's for dependencies
+                simulate_ars += [sar]
+                # as well as *all* trajectory data
+                #  --> add this chunk to one that has already started
+                all_i = tpr * self.adapt_i + i
+                self.all_simulate_mids[all_i].append(sar.msg_ids[0])
+
+        # Save the list we constructed
+        self.simulate_ars = simulate_ars
 
     def _submit_simulate_from_adapt(self):
         tpr = self.params['tpr']
         simulate_ars = []
         for i in range(tpr):
-            with self.lbv.temp_flags(after=[self.adapt_par]):
-                simulate_ars.append(
-                    self.lbv.apply(_call_simulate_from_adapt,
-                                   self.simulator,
-                                   self.adapt_par.msg_ids[0], i, self.params)
-                )
+            with self.lbv.temp_flags(after=[self.adapt_ar]):
+                sar = self.lbv.apply(_call_simulate_from_adapt,
+                                     self.simulator,
+                                     self.adapt_ar.msg_ids[0], i, self.params)
+                # add AR's for dependencies
+                simulate_ars += [sar]
+                # as well as *all* trajectory data
+                #  --> this will be the first chunk
+                self.all_simulate_mids.append([sar.msg_ids[0]])
+
+        self.simulate_ars = simulate_ars
 
     def res_round(self):
-        with self.lbv.temp_flags(after=self.simulate_pars):
-            model_ar = self.lbv.apply(_call_model,
-                                      self.modeler,
-                                      [sar.msg_ids[0] for sar in
-                                       self.simulate_pars],
-                                      self.params)
-        self.model_par = model_ar
+        with self.lbv.temp_flags(after=self.simulate_ars):
+            model_ar = self.lbv.apply(_call_model, self.modeler,
+                                      self.all_simulate_mids, self.params)
+        self.model_ar = model_ar
 
         with self.lbv.temp_flags(after=[model_ar]):
             convergence_ar = self.lbv.apply(_call_convergence,
@@ -116,12 +149,14 @@ class DAG:
         self.res_i += 1
 
     def adapt_round(self):
-        with self.lbv.temp_flags(after=[self.model_par]):
+        with self.lbv.temp_flags(after=[self.model_ar]):
             adapt_ar = self.lbv.apply(_call_adapt,
                                       self.adapter,
-                                      self.model_par.msg_ids[0],
+                                      self.model_ar.msg_ids[0],
                                       self.params)
-        self.adapt_par = adapt_ar
+        self.adapt_ar = adapt_ar
+        self.adapt_i += 1
+        self.res_i = 0
 
     def round(self):
         if self.res_i < self.params['res_spt']:
@@ -130,7 +165,6 @@ class DAG:
         else:
             self.adapt_round()
             self._submit_simulate_from_adapt()
-            self.res_i = 0
             self.res_round()
 
     def is_converged(self):
@@ -151,7 +185,7 @@ class DAG:
 def _multiround(dags, max_per=10):
     all_done = True
     for i, dag in enumerate(dags):
-        all_done = all_done and dag.is_conv()
+        all_done = all_done and dag.is_converged()
         if len(dag.cars_unknown) < max_per:
             dag.round()
     return all_done
