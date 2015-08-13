@@ -1,6 +1,6 @@
 import time
 
-from IPython.parallel.error import ImpossibleDependency
+from IPython.parallel.error import ImpossibleDependency, RemoteError
 
 
 # The following are helper functions to call a method on an object.
@@ -163,7 +163,7 @@ def _multiround(dags, max_per=10):
         try:
             all_done = all_done and dag.is_converged()
             should_submit = len(dag.cars_unknown) < max_per
-        except ImpossibleDependency:
+        except (RemoteError, ImpossibleDependency):
             should_submit = False
         if should_submit:
             dag.round()
