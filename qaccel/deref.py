@@ -1,6 +1,9 @@
 from IPython.parallel import Client
 
-client = Client()
+try:
+    client = Client()
+except IOError:
+    client = None
 
 
 class Deref:
