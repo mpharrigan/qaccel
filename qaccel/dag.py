@@ -1,6 +1,6 @@
 import time
 
-from IPython.parallel import Client
+from IPython.parallel.error import ImpossibleDependency
 
 
 # The following are helper functions to call a method on an object.
@@ -150,7 +150,7 @@ class DAG:
                 if result['converged']:
                     return True
                 else:
-                    pass
+                    continue
             else:
                 updated_cars_unknown.add(car)
         self.cars_unknown = updated_cars_unknown
@@ -160,8 +160,12 @@ class DAG:
 def _multiround(dags, max_per=10):
     all_done = True
     for i, dag in enumerate(dags):
-        all_done = all_done and dag.is_converged()
-        if len(dag.cars_unknown) < max_per:
+        try:
+            all_done = all_done and dag.is_converged()
+            should_submit = len(dag.cars_unknown) < max_per
+        except ImpossibleDependency:
+            should_submit = False
+        if should_submit:
             dag.round()
     return all_done
 
