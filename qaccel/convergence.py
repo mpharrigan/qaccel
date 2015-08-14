@@ -3,7 +3,6 @@
 import scipy.linalg
 import scipy.stats
 import numpy as np
-from .deref import Deref
 
 
 class Multi:
@@ -27,7 +26,8 @@ class Multi:
 
         return _is_done
 
-    def convergence(self, msm, params):
+    def convergence(self, pipe, params):
+        msm = pipe.recv()
         result = params.copy()
         converged = list()
         for c in self.convs:
@@ -40,17 +40,14 @@ class Multi:
 
 
 class Gmrq:
-    def __init__(self, ref_msm, *, cutoff, parallel=True):
+    def __init__(self, ref_msm, *, cutoff):
         self.ref_msm = ref_msm
         self.cutoff = cutoff
 
         self.S = np.diag(ref_msm.populations_)
         self.C = self.S.dot(ref_msm.transmat_)
 
-        self.dref = Deref(parallel)
-
     def convergence(self, msm, params):
-        msm = self.dref(msm)
         assert msm.n_timescales == self.ref_msm.n_timescales
 
         S = self.S
@@ -75,13 +72,11 @@ class Gmrq:
 
 
 class KL:
-    def __init__(self, ref_msm, *, cutoff, parallel=True):
+    def __init__(self, ref_msm, *, cutoff):
         self.ref_msm = ref_msm
         self.cutoff = cutoff
-        self.dref = Deref(parallel)
 
     def convergence(self, msm, params):
-        msm = self.dref(msm)
         kl = np.sum([scipy.stats.entropy(prow, qrow, base=2)
                      for prow, qrow in
                      zip(msm.transmat_, self.ref_msm.transmat_)

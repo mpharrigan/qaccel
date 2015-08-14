@@ -5,17 +5,15 @@ from ..adapt import Random
 
 from ..reference.alanine import get_ref_msm
 
-from ..dag import DAG
+from ..multip import Files
 
 
 class Run:
-    def __init__(self, lbv):
-        self.lbv = lbv
+    def __init__(self):
         self.ref = get_ref_msm()
+        self.param_str = ""
 
-        pass
-
-    def make_dag(self, params):
+    def make_run(self, params):
         def_params = {
             'tpr': 1,
             'res': 10,
@@ -29,16 +27,17 @@ class Run:
             'kl_cutoff': 5.0,
             'conv_behavior': 'all',
         }
+        params['param_str'] = "_".join(
+            "{}-{}".format(k, params[k]) for k in sorted(params))
         def_params.update(params)
-        dag = DAG(self.lbv,
-                  simulator=TMatSimulator(self.ref),
-                  modeler=MSMFromLabtraj(),
-                  convergence=Multi(
-                      Gmrq(self.ref, cutoff=def_params['gmrq_cutoff']),
-                      KL(self.ref, cutoff=def_params['kl_cutoff']),
-                      behavior=def_params['conv_behavior']
-                  ),
-                  adapter=Random(),
-                  params=def_params,
-                  )
+        dag = Files(simulator=TMatSimulator(self.ref),
+                    modeler=MSMFromLabtraj(),
+                    convergence=Multi(
+                        Gmrq(self.ref, cutoff=def_params['gmrq_cutoff']),
+                        KL(self.ref, cutoff=def_params['kl_cutoff']),
+                        behavior=def_params['conv_behavior']
+                    ),
+                    adapter=Random(),
+                    params=def_params,
+                    )
         return dag

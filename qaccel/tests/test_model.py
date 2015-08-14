@@ -5,7 +5,7 @@ import numpy as np
 
 class TestMSMFromLabtraj(TestCase):
     def setUp(self):
-        self.modeler = MSMFromLabtraj(parallel=False)
+        self.modeler = MSMFromLabtraj()
         self.params = {
             'n_states': 2,
             'lag_time': 1,
@@ -15,9 +15,9 @@ class TestMSMFromLabtraj(TestCase):
 
     def test_model(self):
         chunked_trajs = [
-            [[0, 0, 1, 1, 0], [0, 1, 1, 0]]
+            [[0, 0, 1, 1, 0], [0, 0, 1, 1, 0]]
         ]
-        msm = self.modeler.model(chunked_trajs, self.params)
+        msm = self.modeler.model(chunked_trajs, None, self.params)
         tmat_should_be = np.asarray([
             [0.5, 0.5],
             [0.5, 0.5],
@@ -34,5 +34,5 @@ class TestMSMFromLabtraj(TestCase):
         chunked_trajs = [
             [[0, 0, 1, 1, 1, 1, 1, 1]]
         ]
-        msm = self.modeler.model(chunked_trajs, self.params)
+        msm = self.modeler.model(chunked_trajs, None, self.params)
         self.assertTrue(np.all(msm.transmat_ > 0))

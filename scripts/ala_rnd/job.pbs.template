@@ -1,0 +1,7 @@
+# PBS -l walltime=99:00:00:00
+# PBS -l nodes=1:ppn=24
+
+# Run from jobs/ subdirectory
+cd $PBS_O_WORKDIR/..
+
+python drive.py {{job_fn}} {{out_fn}}

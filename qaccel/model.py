@@ -1,15 +1,11 @@
-from .deref import Deref
 from msmbuilder.msm import MarkovStateModel
 import numpy as np
 from .count import make_counts
 
 
 class MSMFromLabtraj:
-    def __init__(self, parallel=True):
-        self.dref = Deref(parallel)
-
-    def model(self, trajs, params):
-        counts = make_counts(trajs, params['n_states'], self.dref)
+    def model(self, trajs, model_pipe, params):
+        counts = make_counts(trajs, params['n_states'])
 
         msm = MarkovStateModel(lag_time=params['lag_time'],
                                prior_counts=params['prior_counts'],
@@ -22,4 +18,8 @@ class MSMFromLabtraj:
             msm.transmat_, msm.populations_ = msm._fit_mle(np.ones_like(counts))
         msm.mapping_ = dict((i, i) for i in range(len(counts)))
         msm._is_dirty = True
+
+        if model_pipe is not None:
+            model_pipe.send(msm)
+
         return msm
