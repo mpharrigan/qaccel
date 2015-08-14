@@ -4,4 +4,4 @@
 # Run from jobs/ subdirectory
 cd $PBS_O_WORKDIR/..
 
-python drive.py {{job_fn}} {{out_fn}}
+python drive.py {{run_fn}} {{out_fn}}
