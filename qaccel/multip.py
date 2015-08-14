@@ -98,7 +98,7 @@ class Files:
                 conv_futs = set()
                 model_fut = None
 
-                for _ in range(self.params['rep_spt']):
+                for _ in range(self.params['res_spt']):
                     update(
                         sims,
                         pool.imap(_call_simulate,
